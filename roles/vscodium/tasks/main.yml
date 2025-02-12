@@ -1,0 +1,28 @@
+---
+- name: Ensure dependencies are present.
+  apt:
+    name:
+      - apt-transport-https
+      - gnupg2
+    state: present
+
+- name: Add paulcarroty's apt key.
+  ansible.builtin.shell: curl -fSsL https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | sudo gpg --dearmor | sudo tee /usr/share/keyrings/vscodium.gpg >/dev/null
+
+
+- name: Add paulcarroty's vscodium repository for vscodium.
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/vscodium.gpg] https://download.vscodium.com/debs vscodium main"
+    state: present
+  register: vscodium_repo
+
+- name: Update apt cache if repo was added.
+  apt:
+    update_cache: true
+  when: vscodium_repo.changed
+  tags: ['skip_ansible_lint']
+
+- name: Ensure VSCodium is installed.
+  apt:
+    name: codium
+    state: present
